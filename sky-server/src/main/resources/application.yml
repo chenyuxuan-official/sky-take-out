@@ -6,6 +6,9 @@ spring:
     active: dev
   main:
     allow-circular-references: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   datasource:
     druid:
       driver-class-name: ${sky.datasource.driver-class-name}
