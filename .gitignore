@@ -1,0 +1,13 @@
+**/target/
+.idea
+*.iml
+*.class
+*Test.java
+**/test/
+
+# 本地私有配置：存放真实数据库密码、阿里云 OSS 密钥等凭据，禁止提交
+application-local.yml
+application-local.properties
+# 兼容用点号命名的写法
+application.local.yml
+application.local.properties
