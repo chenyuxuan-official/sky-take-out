@@ -11,3 +11,10 @@ application-local.properties
 # 兼容用点号命名的写法
 application.local.yml
 application.local.properties
+
+# 开发环境配置：存放数据库密码、阿里云 OSS 密钥等凭据，禁止提交
+application-dev.yml
+application-dev.properties
+# 兼容用点号命名的写法
+application.dev.yml
+application.dev.properties
