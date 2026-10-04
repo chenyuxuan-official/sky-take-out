@@ -3,6 +3,7 @@ package com.sky.controller.admin;
 
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
+import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
@@ -94,5 +95,20 @@ public class DishController {
         log.info("修改菜品: {}", dishDTO);
         dishService.updateWithFlavor(dishDTO);
         return Result.success();
+    }
+
+
+    /**
+     * 按条件查询菜品
+     *
+     * @param dish
+     * @return
+     */
+    @GetMapping("/list")
+    @ApiOperation(value = "按照条件查询菜品")
+    public Result<List<Dish>> list(Dish dish){
+        log.info("按照条件查询菜品: {}",dish);
+        List<Dish> list = dishService.list(dish);
+        return Result.success(list);
     }
 }
