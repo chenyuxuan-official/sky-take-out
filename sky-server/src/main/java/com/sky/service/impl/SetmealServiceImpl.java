@@ -161,4 +161,15 @@ public class SetmealServiceImpl implements SetmealService {
                 .build();
         setmealMapper.update(setmeal);
     }
+
+
+    // ----- 用户端 ------
+    /**
+     * 用户端根据分类id查询套餐
+     * @param setmeal
+     * @return
+     */
+    public List<Setmeal> list(Setmeal setmeal) {
+        return setmealMapper.list(setmeal);
+    }
 }
