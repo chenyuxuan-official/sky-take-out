@@ -56,6 +56,15 @@ public interface DishService {
 
 
 
+    /**
+     * 菜单启停售
+     * @param status
+     * @param id
+     */
+    void startOrStop(Integer status, Long id);
+
+
+
 
     // -------- 用户端 -------
 

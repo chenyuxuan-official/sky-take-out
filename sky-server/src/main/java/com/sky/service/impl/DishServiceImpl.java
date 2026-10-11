@@ -169,6 +169,22 @@ public class DishServiceImpl implements DishService {
     }
 
 
+    /**
+     * 菜品启停售卖
+     * @param status
+     * @param id
+     */
+    // DishServiceImpl.java
+    public void startOrStop(Integer status, Long id) {
+        Dish dish = Dish.builder()
+                .id(id)
+                .status(status)
+                .build();
+
+        dishMapper.update(dish);
+    }
+
+
 
     // ------ 用户端 ------
     /**
