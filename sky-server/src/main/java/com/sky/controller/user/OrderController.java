@@ -3,6 +3,7 @@ package com.sky.controller.user;
 
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
@@ -48,6 +49,19 @@ public class OrderController {
         OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
         log.info("生成预支付交易单：{}", orderPaymentVO);
         return Result.success(orderPaymentVO);
+    }
+
+    /**
+     * 用户查询历史订单
+     * @param page,pageSize,status
+     * @return
+     */
+    @GetMapping("/historyOrders")
+    @ApiOperation("用户历史订单查询")
+    public Result<PageResult> page(Integer page, Integer pageSize, Integer status){
+        log.info("历史订单查询: page = {}, pageSize = {} ,status = {}",page,pageSize,status);
+        PageResult pageResult = orderService.pageQueryUser(page, pageSize, status);
+        return Result.success(pageResult);
     }
 
 

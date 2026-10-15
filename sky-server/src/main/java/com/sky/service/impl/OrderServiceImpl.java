@@ -1,7 +1,10 @@
 package com.sky.service.impl;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.AddressBook;
@@ -14,9 +17,11 @@ import com.sky.mapper.AddressBookMapper;
 import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.ShoppingCartMapper;
+import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,4 +141,40 @@ public class OrderServiceImpl implements OrderService {
                 .build();
         orderMapper.update(orders);
     }
+
+
+    /**
+     * 历史订单查询
+     */
+    @Override
+    public PageResult pageQueryUser(Integer page, Integer pageSize, Integer status){
+        // 设置分页参数
+        PageHelper.startPage(page,pageSize);
+
+        // 构造查询条件 (只差当前用户订单)
+        OrdersPageQueryDTO ordersPageQueryDTO = new OrdersPageQueryDTO();
+        ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());
+        ordersPageQueryDTO.setStatus(status);
+
+        // 分页查询
+        Page<Orders> pageResult = orderMapper.pageQuery(ordersPageQueryDTO);
+
+        // 拼装VO （订单 + 菜品明细）
+        List<OrderVO> list = new ArrayList<>();
+        if (pageResult != null && pageResult.size() > 0) {
+            for (Orders orders : pageResult){
+                // 查询该订单的所有菜品
+                Long ordersId = orders.getId();
+                List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(ordersId);
+
+                // 拷贝基础信息
+                OrderVO orderVO = new OrderVO();
+                BeanUtils.copyProperties(orders, orderVO);
+                orderVO.setOrderDetailList(orderDetails);
+                list.add(orderVO);
+            }
+        }
+        return new PageResult(pageResult.getTotal(), list);
+    }
+
 }

@@ -12,4 +12,9 @@
         </foreach>
     </insert>
 
+    <!--根据菜品id查询菜品详细-->
+    <select id="getByOrderId" resultType="com.sky.entity.OrderDetail">
+        select * from order_detail where order_id = #{orderId}
+    </select>
+
 </mapper>
