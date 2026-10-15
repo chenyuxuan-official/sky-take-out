@@ -12,6 +12,7 @@ import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.ShoppingCart;
 import com.sky.exception.AddressBookBusinessException;
+import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.AddressBookMapper;
 import com.sky.mapper.OrderDetailMapper;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -176,5 +178,97 @@ public class OrderServiceImpl implements OrderService {
         }
         return new PageResult(pageResult.getTotal(), list);
     }
+
+
+    /**
+     * 查询订单详细
+     */
+    @Override
+    public OrderVO  details(Long id){
+        // 1.根据id查询订单
+        Orders orders = orderMapper.getById(id);
+
+        // 2. 查询该订单对应的菜品明细
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
+
+
+        // 3.封装成Vo层返回
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(orders,orderVO);
+        orderVO.setOrderDetailList(orderDetailList);
+        return orderVO;
+    }
+
+    /**
+     * 根据id删除订单
+     * @param id
+     */
+    @Override
+    public void userCancelById(Long id){
+        // 得出用户id
+        Long userId = BaseContext.getCurrentId();
+
+
+        // 只能查询当前用户自己的订单
+        Orders order = orderMapper.getByIdAndUserId(id, userId);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 只允许取消“待付款”或“待接单”的订单
+        Integer status = order.getStatus();
+        if (!Orders.PENDING_PAYMENT.equals(status)
+                && !Orders.TO_BE_CONFIRMED.equals(status)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 组装要改的字段；Mapper 的 update 会只更新非空字段
+        Orders updateOrder = Orders.builder()
+                .id(id)
+                .status(Orders.CANCELLED)
+                .cancelReason("用户取消")
+                .cancelTime(LocalDateTime.now())
+                .build();
+
+
+        // 当前项目是模拟支付：这里只能记录“模拟退款”状态，不会真的退微信款
+        if (Orders.PAID.equals(order.getPayStatus())) {
+            updateOrder.setPayStatus(Orders.REFUND);
+        }
+        orderMapper.update(updateOrder);
+
+
+    }
+
+
+    /**
+     * 再来一单
+     * @param id
+     */
+    @Override
+    public void repetition(Long id){
+        // 查询当前id
+        Long userId = BaseContext.getCurrentId();
+
+        // 根据订单id查询当前订单详情
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
+
+        // 把订单对象转为购物车对象
+        List<ShoppingCart> shoppingCartList = orderDetailList.stream().map(x -> {
+            ShoppingCart shoppingCart = new ShoppingCart();
+
+            // 将原订单详情里面的菜品信息重新复制到购物车对象中
+            BeanUtils.copyProperties(x, shoppingCart, "id");
+            shoppingCart.setUserId(userId);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            return shoppingCart;
+        }).collect(Collectors.toList());
+
+
+        // 将购物车对象批量添加到数据库
+        shoppingCartMapper.insertBatch(shoppingCartList);
+    }
+
+
 
 }

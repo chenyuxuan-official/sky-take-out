@@ -4,6 +4,7 @@ import com.github.pagehelper.Page;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 @Mapper
@@ -40,4 +41,10 @@ public interface OrderMapper {
      */
     @Select("SELECT * FROM orders WHERE id = #{id}")
     Orders getById(Long id);
+
+    /**
+     * 订单和用户一起查询----- 用于删除订单
+     */
+    @Select("select * from orders where id = #{id} and user_id = #{userId}")
+    Orders getByIdAndUserId(@Param("id") Long id , @Param("userId") Long userId);
 }
