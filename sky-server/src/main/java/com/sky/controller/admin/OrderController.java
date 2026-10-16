@@ -3,6 +3,7 @@ package com.sky.controller.admin;
 
 import com.sky.dto.OrdersConfirmDTO;
 import com.sky.dto.OrdersPageQueryDTO;
+import com.sky.dto.OrdersRejectionDTO;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
@@ -32,6 +33,7 @@ public class OrderController {
     @GetMapping("/conditionSearch")
     @ApiOperation("订单搜索")
     public Result<PageResult> conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+        log.info("订单搜索: {}", ordersPageQueryDTO);
         PageResult pageResult = orderService.conditionSearch(ordersPageQueryDTO);
         return Result.success(pageResult);
     }
@@ -44,6 +46,7 @@ public class OrderController {
     @GetMapping("/statistics")
     @ApiOperation("各个状态订单数量")
     public Result<OrderStatisticsVO> statistics() {
+        log.info("各个状态订单数量统计");
         OrderStatisticsVO orderStatisticsVO = orderService.statistics();
         return Result.success(orderStatisticsVO);
     }
@@ -58,6 +61,7 @@ public class OrderController {
     @GetMapping("/details/{id}")
     @ApiOperation("查询订单详情")
     public Result<OrderVO> details(@PathVariable("id") Long id) {
+        log.info("查询订单详情: {}", id);
         OrderVO orderVO = orderService.details(id);
         return Result.success(orderVO);
     }
@@ -71,7 +75,19 @@ public class OrderController {
     @PutMapping("/confirm")
     @ApiOperation("接单")
     public Result confirm(@RequestBody OrdersConfirmDTO ordersConfirmDTO) {
+        log.info("接单: {}", ordersConfirmDTO);
         orderService.confirm(ordersConfirmDTO);
+        return Result.success();
+    }
+
+    /**
+     * 拒单
+     */
+    @PutMapping("/rejection")
+    @ApiOperation("拒绝订单")
+    public Result rejection(@RequestBody OrdersRejectionDTO ordersRejectionDTO) {
+        log.info("拒单: {}", ordersRejectionDTO);
+        orderService.rejection(ordersRejectionDTO);
         return Result.success();
     }
 }

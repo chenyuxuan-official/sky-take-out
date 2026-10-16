@@ -85,6 +85,7 @@ public class EmployeeController {
      */
     @PostMapping("/logout")
     public Result<String> logout() {
+        log.info("员工退出登录");
         return Result.success();
     }
 
@@ -127,6 +128,7 @@ public class EmployeeController {
     @GetMapping("/{id}")
     @ApiOperation("根据id查询员工信息")
     public Result<Employee> getById(@PathVariable Long id){
+        log.info("根据id查询员工信息: {}", id);
         Employee employee = employeeService.getById(id);
         return Result.success(employee);
     }

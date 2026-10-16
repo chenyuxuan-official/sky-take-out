@@ -28,6 +28,13 @@ public interface ShoppingCartMapper {
     void updateNumberById(ShoppingCart shoppingCart);
 
     /**
+     * 删除当前用户的一条购物车记录
+     * @param shoppingCart
+     */
+    @Delete("delete from shopping_cart where id = #{id} and user_id = #{userId}")
+    void deleteByIdAndUserId(ShoppingCart shoppingCart);
+
+    /**
      * 插入购物车数据
      *
      * @param shoppingCart

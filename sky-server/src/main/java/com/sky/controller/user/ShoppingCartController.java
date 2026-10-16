@@ -36,6 +36,17 @@ public class ShoppingCartController {
      }
 
     /**
+     * 减少购物车商品数量
+     */
+    @PostMapping("/sub")
+    @ApiOperation("减少购物车商品数量")
+    public Result<String> sub(@RequestBody ShoppingCartDTO shoppingCartDTO){
+        log.info("减少购物车商品数量");
+        shoppingCartService.subShoppingCart(shoppingCartDTO);
+        return Result.success();
+    }
+
+    /**
      * 查看购物车
      * @return
      */
@@ -53,6 +64,7 @@ public class ShoppingCartController {
     @DeleteMapping("/clean")
     @ApiOperation("清空购物车")
     public Result<String> clean(){
+        log.info("清空购物车");
         shoppingCartService.cleanShoppingCart();
         return Result.success();
     }
