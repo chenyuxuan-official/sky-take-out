@@ -61,3 +61,9 @@ sky:
     # 微信小程序配置
     appid: ${sky.wechat.appid}
     secret: ${sky.wechat.secret}
+  shop:
+    # 商家店铺地址（百度地图配送范围校验用）
+    address: 北京市海淀区上地十街10号
+  baidu:
+    # 百度地图开放平台 AK（服务端应用）
+    ak: ${sky.baidu.ak}
