@@ -17,4 +17,9 @@ public interface AddressBookService {
     void setDefault(AddressBook addressBook);
 
     void deleteById(Long id);
+
+    /**
+     * 查询默认地址
+     */
+    AddressBook getDefault();
 }

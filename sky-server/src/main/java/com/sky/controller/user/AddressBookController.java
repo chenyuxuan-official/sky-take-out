@@ -111,5 +111,19 @@ public class AddressBookController {
     }
 
 
+    /**
+     * 查询默认地址
+     */
+    /**
+     * 查询默认地址
+     */
+    @GetMapping("/default")
+    @ApiOperation("查询默认地址")
+    public Result<AddressBook> getDefault() {
+        log.info("查询默认地址");
+        return Result.success(addressBookService.getDefault());
+    }
+
+
 
 }

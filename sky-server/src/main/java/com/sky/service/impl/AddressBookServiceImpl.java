@@ -2,6 +2,7 @@ package com.sky.service.impl;
 
 import com.sky.context.BaseContext;
 import com.sky.entity.AddressBook;
+import com.sky.exception.AddressBookBusinessException;
 import com.sky.mapper.AddressBookMapper;
 import com.sky.service.AddressBookService;
 import lombok.extern.slf4j.Slf4j;
@@ -88,5 +89,22 @@ public class AddressBookServiceImpl implements AddressBookService {
         addressBookMapper.deleteById(id);
     }
 
+
+    /**
+     * 查询默认地址
+     * @return
+     */
+    public AddressBook getDefault(){
+        AddressBook addressBook = new AddressBook();
+        addressBook.setUserId(BaseContext.getCurrentId());
+        addressBook.setIsDefault(1);
+
+        List<AddressBook> list = addressBookMapper.list(addressBook);
+
+        if (list == null || list.isEmpty()) {
+            throw new AddressBookBusinessException("没有查询到默认地址");
+        }
+        return list.get(0);
+    }
 
 }
