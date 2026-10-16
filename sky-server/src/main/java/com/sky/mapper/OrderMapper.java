@@ -47,4 +47,12 @@ public interface OrderMapper {
      */
     @Select("select * from orders where id = #{id} and user_id = #{userId}")
     Orders getByIdAndUserId(@Param("id") Long id , @Param("userId") Long userId);
+
+
+    /**
+     * 根据不同订单状态统计订单
+     * @param status
+     */
+    @Select("select count(*) from orders where status = #{status}")
+    Integer countStatus(Integer status);
 }
