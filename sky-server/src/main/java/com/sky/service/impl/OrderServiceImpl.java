@@ -211,6 +211,12 @@ public class OrderServiceImpl implements OrderService {
         OrderVO orderVO = new OrderVO();
         BeanUtils.copyProperties(orders,orderVO);
         orderVO.setOrderDetailList(orderDetailList);
+
+        // 订单表没有性别字段，按地址簿id取回收货人性别，供详情页展示"先生/女士"
+        AddressBook addressBook = addressBookMapper.getById(orders.getAddressBookId());
+        if (addressBook != null) {
+            orderVO.setSex(addressBook.getSex());
+        }
         return orderVO;
     }
 
