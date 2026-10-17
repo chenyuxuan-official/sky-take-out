@@ -483,4 +483,41 @@ public class OrderServiceImpl implements OrderService {
 
         orderMapper.update(orders);
     }
+
+
+    /**
+     * 取消订单
+     */
+    public void cancel(OrdersCancelDTO ordersCancelDTO){
+        // 根据id查询订单
+        Orders ordersDB = orderMapper.getById(ordersCancelDTO.getId());
+
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 与前端一致：待付款、已接单、派送中、已完成可取消；待接单走拒单，已取消不可再取消
+        Integer status = ordersDB.getStatus();
+        boolean cancellable = Orders.PENDING_PAYMENT.equals(status)
+                || Orders.CONFIRMED.equals(status)
+                || Orders.DELIVERY_IN_PROGRESS.equals(status)
+                || Orders.COMPLETED.equals(status);
+        if (!cancellable) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 构造要更新的字段：状态、取消原因、取消时间
+        Orders orders = new Orders();
+        orders.setId(ordersDB.getId());
+        orders.setStatus(Orders.CANCELLED);
+        orders.setCancelReason(ordersCancelDTO.getCancelReason());
+        orders.setCancelTime(LocalDateTime.now());
+
+        // 模拟支付：不做真实微信退款，已支付时仅记录退款状态（与拒单同一套写法）
+        if (Orders.PAID.equals(ordersDB.getPayStatus())) {
+            orders.setPayStatus(Orders.REFUND);
+        }
+
+        orderMapper.update(orders);
+    }
 }
