@@ -6,6 +6,10 @@ import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper
 public interface OrderMapper {
@@ -55,4 +59,20 @@ public interface OrderMapper {
      */
     @Select("select count(*) from orders where status = #{status}")
     Integer countStatus(Integer status);
+
+    /**
+     * 根据状态和下单时间查询订单
+     * @param status
+     * @param orderTime
+     */
+    @Select("select * from orders where status = #{status} and order_time < #{orderTime}")
+    List<Orders> getByStatusAndOrdertimeLT(Integer status, LocalDateTime orderTime);
+
+    /**
+     * 条件更新（CAS）：仅当订单仍是待付款状态时才置为已取消，供定时任务使用。
+     * 若影响行数为 0，说明该订单已被并发修改（如用户刚支付成功），不能覆盖。
+     */
+    @Update("update orders set status = 6, cancel_reason = #{cancelReason}, cancel_time = #{cancelTime} " +
+            "where id = #{id} and status = 1")
+    int cancelTimeoutOrder(Orders orders);
 }
