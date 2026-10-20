@@ -152,6 +152,20 @@ public class OrderServiceImpl implements OrderService {
         Long userId = BaseContext.getCurrentId();
         // 根据订单号和用户id查询订单
         Orders ordersDB = orderMapper.getByNumberAndUserId(outTradeNo, userId);
+        if (ordersDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 幂等：已经支付过的订单直接返回，不重复推送来单提醒
+        if (Orders.PAID.equals(ordersDB.getPayStatus())) {
+            return;
+        }
+
+        // 只有待付款的订单才能支付成功
+        if (!Orders.PENDING_PAYMENT.equals(ordersDB.getStatus())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
         // 根据订单id更新订单的状态、支付状态、结账时间
         Orders orders = Orders.builder()
                 .id(ordersDB.getId())
@@ -159,7 +173,12 @@ public class OrderServiceImpl implements OrderService {
                 .payStatus(Orders.PAID)
                 .checkoutTime(LocalDateTime.now())
                 .build();
-        orderMapper.update(orders);
+        // CAS 更新：仅当订单仍为待付款时才生效，避免覆盖并发取消/超时关单结果
+        int rows = orderMapper.paySuccess(orders);
+        if (rows == 0) {
+            log.warn("订单状态已变更，跳过来单提醒：{}", outTradeNo);
+            return;
+        }
 
         // 来单提醒：type=1 表示来单提醒，type=2 表示客户催单
         Map<String, Object> map = new HashMap<>();

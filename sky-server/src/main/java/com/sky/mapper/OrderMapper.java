@@ -79,8 +79,22 @@ public interface OrderMapper {
 
 
     /**
+     * 支付成功：仅当订单仍为待付款时更新，返回影响行数
+     */
+    @Update("update orders set status = #{status}, pay_status = #{payStatus}, checkout_time = #{checkoutTime} " +
+            "where id = #{id} and status = 1")
+    int paySuccess(Orders orders);
+
+
+    /**
      * 根据动态条件统计营业额
      * @param map
      */
     Double sumByMap(Map map);
+
+    /**
+     * 根据动态条件统计订单数量
+     * @param map
+     */
+    Integer countByMap(Map map);
 }

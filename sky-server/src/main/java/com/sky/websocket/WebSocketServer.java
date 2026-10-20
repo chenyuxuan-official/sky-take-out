@@ -10,7 +10,6 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,7 +34,15 @@ public class WebSocketServer {
      */
     @OnOpen
     public void onOpen(Session session, @PathParam("sid") String sid) {
-        sessionMap.put(sid, session);
+        // 同一 sid 重连时，关闭旧会话，避免旧连接泄漏、消息重复推送
+        Session old = sessionMap.put(sid, session);
+        if (old != null && old != session) {
+            try {
+                old.close();
+            } catch (Exception e) {
+                log.warn("关闭旧会话失败：{}", sid, e);
+            }
+        }
         log.info("客户端：{} 建立连接，当前在线 {} 个", sid, sessionMap.size());
     }
 
@@ -51,8 +58,9 @@ public class WebSocketServer {
      * 连接关闭调用的方法
      */
     @OnClose
-    public void onClose(@PathParam("sid") String sid) {
-        sessionMap.remove(sid);
+    public void onClose(Session session, @PathParam("sid") String sid) {
+        // 仅移除当前会话，防止新连接被旧连接关闭事件误删
+        sessionMap.remove(sid, session);
         log.info("连接断开：{}，当前在线 {} 个", sid, sessionMap.size());
     }
 
@@ -62,19 +70,21 @@ public class WebSocketServer {
     @OnError
     public void onError(Session session, Throwable error, @PathParam("sid") String sid) {
         log.error("连接异常：{}", sid, error);
-        sessionMap.remove(sid);
+        sessionMap.remove(sid, session);
     }
 
     /**
      * 群发消息
      */
     public void sendToAllClient(String message) {
-        Collection<Session> sessions = sessionMap.values();
-        for (Session session : sessions) {
+        for (Map.Entry<String, Session> entry : sessionMap.entrySet()) {
+            Session session = entry.getValue();
             try {
                 // 服务器向客户端发送消息
                 session.getBasicRemote().sendText(message);
             } catch (Exception e) {
+                // 推送失败说明会话已失效，顺手清理
+                sessionMap.remove(entry.getKey(), session);
                 log.error("向客户端推送消息失败", e);
             }
         }
