@@ -71,6 +71,15 @@ const router = new Router({
           }
         },
         {
+          path: "refund",
+          component: () =>
+            import(/* webpackChunkName: "refund" */ "@/views/refund/index.vue"),
+          meta: {
+            title: "退款审核",
+            icon: "icon-order"
+          }
+        },
+        {
           path: "setmeal",
           component: () =>
             import(/* webpackChunkName: "shopTable" */ "@/views/setmeal/index.vue"),

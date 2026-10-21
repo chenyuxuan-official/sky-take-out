@@ -63,7 +63,7 @@
 | 菜品管理 | 新增（含口味）、修改、批量删除、起售停售、分页 | `/admin/dish` |
 | 套餐管理 | 新增（含菜品关系）、修改、删除、起售停售 | `/admin/setmeal` |
 | 店铺状态 | 营业 / 打烊（Redis `SHOP_STATUS`） | `PUT /admin/shop/{status}` |
-| 订单管理 | 条件搜索、状态统计、详情、接单、拒单、派送、完成、取消 | `/admin/order` |
+| 订单管理 | 条件搜索、状态统计、详情、接单、拒单、派送、完成、取消、退款审核 | `/admin/order` |
 | 来单提醒 | WebSocket 推送新订单，前端弹窗 + 响铃 | `/ws/{sid}` |
 | 客户催单 | 接收催单消息并提醒商家 | `/ws/{sid}` |
 | 工作台 | 今日营业额、有效订单、完成率、客单价、新增用户；订单/菜品/套餐总览 | `/admin/workspace` |
@@ -81,6 +81,7 @@
 | 下单 | 校验地址、购物车、配送范围（≤5km） | `POST /user/order/submit` |
 | 支付 | 模拟支付，成功后触发来单提醒 | `PUT /user/order/payment` |
 | 订单 | 历史订单、详情、取消、再来一单、催单 | `/user/order` |
+| 申请退款 | 已接单/派送中/已完成且已支付的订单可提交退款申请 | `POST /user/order/refund/{id}` |
 | 店铺信息 | 店铺名称、地址、电话（小程序首页展示） | `GET /user/shop/info` |
 
 ## 技术栈
@@ -197,7 +198,17 @@ sky-take-out
 | 5 | 已完成 | 再来一单（复制明细到购物车） |
 | 6 | 已取消 | — |
 
-支付状态 `pay_status`：0 未支付、1 已支付、2 已退款（取消已付款订单时置 2，不真实退款）。
+支付状态 `pay_status`：0 未支付、1 已支付、2 已退款、3 退款申请中（取消已付款订单时置 2，不真实退款）。
+
+**退款申请流程**
+
+```
+用户「申请退款」→ pay_status=3（订单状态不变，仅 3/4/5 且已支付可申请）
+      ├─ 商家「同意」→ status=6 + pay_status=2 + cancel_reason="商家同意退款"
+      └─ 商家「拒绝」→ pay_status=1（恢复已支付，订单状态保持原样）
+```
+
+管理端在「退款审核」页列出 `pay_status=3` 的订单，可同意或拒绝；用户端详情页会显示「退款申请已提交，等待商家处理」。
 
 ### 4. 定时任务 `OrderTask`
 
@@ -238,6 +249,7 @@ sky-take-out
 | `/login` | 登录 | 默认填入 `admin / 123456`，实际调 `/employee/login` |
 | `/dashboard` | 工作台 | 营业数据卡片、订单状态统计、菜品/套餐总览、订单列表 |
 | `/order` | 订单管理 | 搜索 + 全部/待接单/待派送/派送中/已完成/已取消，接单、拒单、派送、完成、取消、详情 |
+| `/refund` | 退款审核 | 列出 `pay_status=3` 的退款申请，可同意（订单取消+退款）或拒绝 |
 | `/statistics` | 数据统计 | 营业额、用户、订单、Top10 图表 + 导出 Excel |
 | `/dish`、`/dish/add` | 菜品 | 列表、起售停售、新增/编辑 |
 | `/setmeal`、`/setmeal/add` | 套餐 | 列表、起售停售、新增/编辑 |
@@ -265,7 +277,7 @@ sky-take-out
 
 ## 接口速览
 
-共 **17 个 Controller、72 个接口**（管理端 46 / 用户端 26），启动后访问 `http://localhost:8080/doc.html` 查看完整文档（分管理端、用户端两个分组）。
+共 **17 个 Controller、75 个接口**（管理端 48 / 用户端 27），启动后访问 `http://localhost:8080/doc.html` 查看完整文档（分管理端、用户端两个分组）。
 
 | 分组 | 控制器 | 前缀 | 接口数 |
 |---|---|---|---|
@@ -273,13 +285,13 @@ sky-take-out
 | 管理端 | Category | `/admin/category` | 6 |
 | 管理端 | Dish | `/admin/dish` | 7 |
 | 管理端 | Setmeal | `/admin/setmeal` | 6 |
-| 管理端 | Order | `/admin/order` | 8 |
+| 管理端 | Order | `/admin/order` | 10 |
 | 管理端 | Report | `/admin/report` | 5 |
 | 管理端 | WorkSpace | `/admin/workspace` | 4 |
 | 管理端 | Shop | `/admin/shop` | 2 |
 | 管理端 | Common | `/admin/common` | 1 |
 | 用户端 | User | `/user/user` | 1 |
-| 用户端 | Order | `/user/order` | 8 |
+| 用户端 | Order | `/user/order` | 9 |
 | 用户端 | ShoppingCart | `/user/shoppingCart` | 4 |
 | 用户端 | AddressBook | `/user/addressBook` | 7 |
 | 用户端 | Category | `/user/category` | 1 |
@@ -428,7 +440,7 @@ server {
 
 **功能限制**
 
-- 支付为模拟：`payment()` 直接调用 `paySuccess()` 并返回 `null`，未接入微信商户号与证书；
+- 支付为模拟：`payment()` 直接调用 `paySuccess()` 并返回 `null`，未接入微信商户号与证书；退款同样只改数据库状态（`pay_status=2`），不调用微信退款接口；
 - `BaseContext` 基于 ThreadLocal，拦截器未在 `afterCompletion` 中 `remove()`，线程复用时存在脏数据风险；
 - 「再来一单」按订单 id 复制明细，未校验订单归属；
 - 店铺名称 / 地址 / 电话来自后端配置 `sky.shop.*`，管理端没有编辑入口，改地址要改配置文件并重启；

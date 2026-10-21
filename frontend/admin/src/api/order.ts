@@ -66,3 +66,28 @@ export const getOrderListBy = (params: any) => {
     method: 'get' /*  */
   })
 }
+
+// 退款申请列表（payStatus=3 表示退款申请中）
+export const getRefundPage = (params: any) => {
+  return request({
+    url: '/order/conditionSearch',
+    method: 'get',
+    params: { ...params, payStatus: 3 }
+  })
+}
+
+// 同意退款
+export const approveRefund = (params: any) => {
+  return request({
+    url: `/order/refund/approve/${params.id}`,
+    method: 'put'
+  })
+}
+
+// 拒绝退款
+export const rejectRefund = (params: any) => {
+  return request({
+    url: `/order/refund/reject/${params.id}`,
+    method: 'put'
+  })
+}

@@ -34,7 +34,8 @@
             v-if="orderDetailsData.status === 2">
             催单
           </button>
-          <button class="new_btn" type="default" @click="handleRefund('center')" v-if="orderDetailsData.status == 5">
+          <button class="new_btn" type="default" @click="handleRefund('center')"
+            v-if="(orderDetailsData.status === 3 || orderDetailsData.status === 4 || orderDetailsData.status === 5) && orderDetailsData.payStatus === 1">
             申请退款
           </button>
           <button class="new_btn" type="default" @click="oneMoreOrder(orderDetailsData.id)"
@@ -53,6 +54,10 @@
       您的订单已
       <text>退款成功</text>
       。
+    </view>
+    <view class="box timeTip" v-if="orderDetailsData.payStatus === 3">
+      <view class="icon moneyIcon"></view>
+      退款申请已提交，等待商家处理。
     </view>
   </view>
 </template>

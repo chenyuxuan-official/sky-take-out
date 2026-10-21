@@ -636,4 +636,89 @@ public class OrderServiceImpl implements OrderService {
         webSocketServer.sendToAllClient(JSON.toJSONString(map));
         log.info("催单提醒已推送：{}", id);
     }
+
+
+    /**
+     * 用户申请退款
+     * 已支付、且订单处于已接单/派送中/已完成时才能申请；只把支付状态改为“退款申请中”，订单状态不动
+     * @param id
+     */
+    @Override
+    public void refundApply(Long id) {
+        Long userId = BaseContext.getCurrentId();
+
+        // 只能申请自己的订单
+        Orders order = orderMapper.getByIdAndUserId(id, userId);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 只有已支付的订单才有钱可退
+        if (!Orders.PAID.equals(order.getPayStatus())) {
+            throw new OrderBusinessException("该订单当前支付状态不支持申请退款");
+        }
+
+        // 待付款/待接单走“取消订单”即可，退款申请只处理已接单及之后的订单
+        Integer status = order.getStatus();
+        if (!Orders.CONFIRMED.equals(status)
+                && !Orders.DELIVERY_IN_PROGRESS.equals(status)
+                && !Orders.COMPLETED.equals(status)) {
+            throw new OrderBusinessException("当前订单状态不支持申请退款，请直接取消订单");
+        }
+
+        Orders update = Orders.builder()
+                .id(id)
+                .payStatus(Orders.REFUND_APPLY)
+                .build();
+        orderMapper.update(update);
+        log.info("用户 {} 对订单 {} 申请退款", userId, order.getNumber());
+    }
+
+
+    /**
+     * 管理端同意退款：订单置为已取消，支付状态置为已退款
+     * @param id
+     */
+    @Override
+    public void refundApprove(Long id) {
+        Orders order = orderMapper.getById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Orders.REFUND_APPLY.equals(order.getPayStatus())) {
+            throw new OrderBusinessException("该订单没有待处理的退款申请");
+        }
+
+        Orders update = Orders.builder()
+                .id(id)
+                .status(Orders.CANCELLED)
+                .payStatus(Orders.REFUND)
+                .cancelReason("商家同意退款")
+                .cancelTime(LocalDateTime.now())
+                .build();
+        orderMapper.update(update);
+        log.info("订单 {} 退款申请已通过", order.getNumber());
+    }
+
+
+    /**
+     * 管理端拒绝退款：支付状态恢复为已支付
+     * @param id
+     */
+    @Override
+    public void refundReject(Long id) {
+        Orders order = orderMapper.getById(id);
+        if (order == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        if (!Orders.REFUND_APPLY.equals(order.getPayStatus())) {
+            throw new OrderBusinessException("该订单没有待处理的退款申请");
+        }
+
+        orderMapper.update(Orders.builder()
+                .id(id)
+                .payStatus(Orders.PAID)
+                .build());
+        log.info("订单 {} 退款申请已被拒绝", order.getNumber());
+    }
 }

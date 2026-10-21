@@ -120,4 +120,22 @@ public interface OrderService {
      * @param id
      */
     void reminder(Long id);
+
+    /**
+     * 用户申请退款（已支付、已接单/派送中/已完成的订单）
+     * @param id
+     */
+    void refundApply(Long id);
+
+    /**
+     * 管理端同意退款
+     * @param id
+     */
+    void refundApprove(Long id);
+
+    /**
+     * 管理端拒绝退款
+     * @param id
+     */
+    void refundReject(Long id);
 }

@@ -131,4 +131,18 @@ public class OrderController {
         return Result.success();
     }
 
+
+    /**
+     * 用户申请退款（已接单/派送中/已完成的已支付订单）
+     * @param id
+     * @return
+     */
+    @PostMapping("/refund/{id}")
+    @ApiOperation("用户申请退款")
+    public Result refund(@PathVariable("id") Long id){
+        log.info("用户申请退款: {}", id);
+        orderService.refundApply(id);
+        return Result.success();
+    }
+
 }

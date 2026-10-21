@@ -129,4 +129,30 @@ public class OrderController {
         orderService.complete(id);
         return Result.success();
     }
+
+
+    /**
+     * 同意退款
+     * @param id
+     */
+    @PutMapping("/refund/approve/{id}")
+    @ApiOperation("同意退款")
+    public Result<String> refundApprove(@PathVariable Long id){
+        log.info("同意退款: {}", id);
+        orderService.refundApprove(id);
+        return Result.success();
+    }
+
+
+    /**
+     * 拒绝退款
+     * @param id
+     */
+    @PutMapping("/refund/reject/{id}")
+    @ApiOperation("拒绝退款")
+    public Result<String> refundReject(@PathVariable Long id){
+        log.info("拒绝退款: {}", id);
+        orderService.refundReject(id);
+        return Result.success();
+    }
 }

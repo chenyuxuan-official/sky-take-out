@@ -356,6 +356,12 @@ export const repetitionOrder = (params) =>
 		method: 'POST',
 		params
 	})
+// 申请退款（已接单/派送中/已完成的已支付订单）
+export const refundApply = (params) =>
+	request({
+		url: `/user/order/refund/${params}`,
+		method: 'POST'
+	})
 
 
 // 获取用户送餐期望时间

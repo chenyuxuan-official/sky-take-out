@@ -5,6 +5,7 @@ import {
 	delShoppingCart,
 	reminderOrder,
 	cancelOrder,
+	refundApply,
 } from '../api/api.js'
 import { mapState, mapMutations } from 'vuex'
 import { baseUrl } from '../../utils/env'
@@ -189,11 +190,32 @@ export default {
 		openPopuos(type) {
 			this.$refs.commonPopup.open(type)
 		},
-		// 联系商家进行退款弹层
+		// 申请退款（已接单/派送中/已完成，且已支付）
 		handleRefund(type) {
-			this.showConfirm = false
-			this.openPopuos(type)
-			this.textTip = '请联系商家进行退款！'
+			const order = this.orderDetailsData || {}
+			if (order.payStatus === 3) {
+				uni.showToast({ title: '退款申请已提交，等待商家处理', icon: 'none' })
+				return
+			}
+			uni.showModal({
+				title: '申请退款',
+				content: '确定要申请退款吗？提交后需商家审核。',
+				success: (res) => {
+					if (!res.confirm) {
+						return
+					}
+					refundApply(order.id)
+						.then((r) => {
+							if (r && r.code === 1) {
+								uni.showToast({ title: '已提交，等待商家审核', icon: 'none' })
+								this.getBaseData(this.orderId)
+							}
+						})
+						.catch((err) => {
+							uni.showToast({ title: (err && err.msg) || '申请失败', icon: 'none' })
+						})
+				}
+			})
 		},
 		// 拨打电话弹层
 		handlePhone(type, phone) {
