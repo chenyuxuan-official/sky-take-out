@@ -152,6 +152,7 @@ sky-take-out
 ```
 
 > `application-dev.yml` 存放数据库、Redis、OSS、微信等真实凭据，已在 `.gitignore` 中忽略，不随仓库分发。
+> `frontend/*/node_modules`、`frontend/admin/dist`、`frontend/miniapp/unpackage` 都是本地产物（依赖与编译结果），同样被忽略，仓库里只保留源码。
 
 ## 架构与请求链路
 
@@ -367,9 +368,12 @@ npm run build      # 生产构建，dist/ 交给 Nginx
 - Node 17+ 需 `NODE_OPTIONS=--openssl-legacy-provider`（webpack 4）。
 
 ### 6. 启动小程序
-1. HBuilderX 打开 `frontend/miniapp`，运行到微信开发者工具；
+1. HBuilderX 打开 `frontend/miniapp`，运行到微信开发者工具（首次运行会在本地生成 `unpackage/`，该目录不进仓库）；
 2. 或先编译，再用微信开发者工具导入 `unpackage/dist/dev/mp-weixin`；
 3. 后端地址在 `utils/env.js` 的 `baseUrl`，默认 `http://localhost:8080`（不走 Nginx）。
+
+> 注意：微信开发者工具读的是**编译产物** `unpackage/dist/dev/mp-weixin`，不是 `pages/` 下的源码。
+> 改完源码必须在 HBuilderX 里重新“运行到小程序”，只关掉小程序重进是不会生效的。
 
 ## 部署拓扑
 
