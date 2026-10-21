@@ -208,7 +208,9 @@ sky-take-out
       └─ 商家「拒绝」→ pay_status=1（恢复已支付，订单状态保持原样）
 ```
 
-管理端在「退款审核」页列出 `pay_status=3` 的订单，可同意或拒绝；用户端详情页会显示「退款申请已提交，等待商家处理」。
+管理端在「退款审核」页（路由 `/refund`，左侧菜单「退款审核」）列出 `pay_status=3` 的订单，可同意或拒绝；用户端订单详情页会显示「退款申请已提交，等待商家处理」。
+
+体验完整链路：小程序对一笔「已完成」订单点「申请退款」→ 管理端「退款审核」出现该订单 → 同意（订单变已取消 + 已退款）或拒绝（恢复已支付）。
 
 ### 4. 定时任务 `OrderTask`
 
@@ -370,22 +372,47 @@ mvn -pl sky-server -am spring-boot:run
 ### 5. 启动管理端
 ```bash
 cd frontend/admin
-npm install --legacy-peer-deps
-npm run serve      # http://localhost:8888
-npm run build      # 生产构建，dist/ 交给 Nginx
+npm install --legacy-peer-deps      # 首次
+npm run serve                      # 开发模式 http://localhost:8888
+npm run build                      # 生产构建，产物在 dist/
 ```
 - 默认账号 `admin / 123456`（口令存 `employee` 表，MD5）；
 - 开发环境 `.env.development`：`/api` 代理到 `http://localhost:8080/admin`，WebSocket 指向 `ws://localhost:8080/ws/`；
 - 生产环境 `.env.production`：`/api` 与 `ws://localhost:81/ws/`，由 Nginx 反代；
 - Node 17+ 需 `NODE_OPTIONS=--openssl-legacy-provider`（webpack 4）。
 
+**部署到 Nginx**（把 `dist/` 拷到站点根目录）：
+
+```bash
+npm run build
+# 备份旧版本后覆盖
+xcopy /E /Y /I dist "D:\Nginx\nginx-1.26.2\html\sky"
+nginx -t && nginx -s reload      # 在 nginx 目录下执行
+```
+
+刷新页面前记得清 Service Worker（F12 → Application → Service Workers → Unregister），否则可能加载的是缓存的旧 `index.html`。
+
 ### 6. 启动小程序
-1. HBuilderX 打开 `frontend/miniapp`，运行到微信开发者工具（首次运行会在本地生成 `unpackage/`，该目录不进仓库）；
-2. 或先编译，再用微信开发者工具导入 `unpackage/dist/dev/mp-weixin`；
+
+| 工具 | 打开的目录 | 作用 |
+|---|---|---|
+| HBuilderX | `frontend/miniapp` | 编辑源码、编译，产物写入 `unpackage/dist/dev/mp-weixin` |
+| 微信开发者工具 | `frontend/miniapp/unpackage/dist/dev/mp-weixin` | 运行编译结果 |
+
+1. HBuilderX 打开 `frontend/miniapp`；
+2. 菜单「运行 → 运行到小程序模拟器 → 微信开发者工具」，HBuilderX 会自动编译并拉起开发者工具（首次需在开发者工具里开启「设置 → 安全设置 → 服务端口」）；
 3. 后端地址在 `utils/env.js` 的 `baseUrl`，默认 `http://localhost:8080`（不走 Nginx）。
 
 > 注意：微信开发者工具读的是**编译产物** `unpackage/dist/dev/mp-weixin`，不是 `pages/` 下的源码。
-> 改完源码必须在 HBuilderX 里重新“运行到小程序”，只关掉小程序重进是不会生效的。
+> 改完源码必须在 HBuilderX 里重新“运行到小程序”，只关掉小程序重进不会生效；如果改了代码但界面没变，先确认开发者工具打开的是不是这个产物目录。
+
+### 7. 本地开发改动怎么生效
+
+| 改了哪里 | 生效方式 |
+|---|---|
+| `sky-*` 后端代码 | 重启 `SkyApplication`（IDEA 或 `mvn spring-boot:run`） |
+| `frontend/admin` | `npm run serve` 会自动热更新；部署版需 `npm run build` 后覆盖 Nginx 目录 |
+| `frontend/miniapp` | HBuilderX 里重新「运行到小程序」（会重编 `unpackage`） |
 
 ## 部署拓扑
 
@@ -432,6 +459,8 @@ server {
 | 管理端打包报 `ERR_OSSL_EVP_UNSUPPORTED` | 设置 `NODE_OPTIONS=--openssl-legacy-provider` |
 | WebSocket 握手失败 | Nginx `/ws/` 未配 `Upgrade`/`Connection`；地址要带 81 端口 |
 | 小程序改了代码不生效 | 微信开发者工具读的是 `unpackage/dist/dev/mp-weixin`，需 HBuilderX 重新编译 |
+| 小程序点「申请退款」仍弹「请联系商家进行退款」 | 开发者工具打开的是旧目录或旧产物，确认项目目录指向 `...\frontend\miniapp\unpackage\dist\dev\mp-weixin` 后重新编译 |
+| 管理端看不到「退款审核」菜单 | 部署的 `html/sky` 还是旧包，重新 `npm run build` 覆盖并清 Service Worker |
 | 下单提示「购物车数据为空」 | 下单成功会立即清空购物车，页面残留是前端状态未刷新 |
 | 导出文件打不开 | 模板未随包发布，或接口被 `Result` 包装成 JSON |
 | 报表出现 NaN | 统计分母为 0，代码已兜底为 0 |
