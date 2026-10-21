@@ -65,6 +65,18 @@ public class OrderController {
         return Result.success(pageResult);
     }
 
+    /**
+     * 查询退款订单（历史订单「退款」tab）
+     * @param page,pageSize,status,payStatus
+     * @return
+     */
+    @GetMapping("/queryOrdersCheckStatus")
+    @ApiOperation("查询退款订单")
+    public Result<PageResult> queryOrdersCheckStatus(Integer page, Integer pageSize, Integer status, Integer payStatus){
+        log.info("退款订单查询: page = {}, pageSize = {}, status = {}, payStatus = {}", page, pageSize, status, payStatus);
+        return Result.success(orderService.pageQueryUser(page, pageSize, status, payStatus));
+    }
+
 
     /**
      * 查询订单详信息

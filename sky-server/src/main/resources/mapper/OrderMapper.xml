@@ -54,6 +54,9 @@
             <if test="status != null">
                 AND status = #{status}
             </if>
+            <if test="payStatus != null">
+                AND pay_status = #{payStatus}
+            </if>
             <if test="number != null and number != ''">
                 AND number LIKE CONCAT('%', #{number}, '%')
             </if>

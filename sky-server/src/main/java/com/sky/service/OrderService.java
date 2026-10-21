@@ -34,6 +34,11 @@ public interface OrderService {
     PageResult pageQueryUser(Integer page, Integer pageSize, Integer status);
 
     /**
+     * 查询历史订单（支持按支付状态过滤，用于「退款」tab）
+     */
+    PageResult pageQueryUser(Integer page, Integer pageSize, Integer status, Integer payStatus);
+
+    /**
      * 查询订单详情
      */
     OrderVO details(Long id);

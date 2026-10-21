@@ -195,6 +195,15 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public PageResult pageQueryUser(Integer page, Integer pageSize, Integer status){
+        return pageQueryUser(page, pageSize, status, null);
+    }
+
+    /**
+     * 历史订单查询（支持按支付状态过滤）
+     * 小程序「退款」tab 传入 payStatus=2 即可筛出已退款订单
+     */
+    @Override
+    public PageResult pageQueryUser(Integer page, Integer pageSize, Integer status, Integer payStatus){
         // 设置分页参数
         PageHelper.startPage(page,pageSize);
 
@@ -202,6 +211,7 @@ public class OrderServiceImpl implements OrderService {
         OrdersPageQueryDTO ordersPageQueryDTO = new OrdersPageQueryDTO();
         ordersPageQueryDTO.setUserId(BaseContext.getCurrentId());
         ordersPageQueryDTO.setStatus(status);
+        ordersPageQueryDTO.setPayStatus(payStatus);
 
         // 分页查询
         Page<Orders> pageResult = orderMapper.pageQuery(ordersPageQueryDTO);
