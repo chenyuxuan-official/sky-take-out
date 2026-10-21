@@ -302,6 +302,13 @@ export const getShopStatus = (params) => {
 		method: 'GET'
 	})
 }
+// 获取店铺资料（名称 / 地址 / 电话）
+export const getShopInfo = () => {
+	return request({
+		url: `/user/shop/info`,
+		method: 'GET'
+	})
+}
 // 获取店铺信息
 export const getMerchantInfo = (params) => {
 	return request({

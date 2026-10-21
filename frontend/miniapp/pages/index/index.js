@@ -21,7 +21,9 @@ import {
 	// 此接口为首页查询套餐详情展示的接口
 	querySetmealDishById,
 	// 获取店铺状态
-	getShopStatus
+	getShopStatus,
+	// 获取店铺资料（名称/地址/电话）
+	getShopInfo as getShopInfoApi
 } from "../api/api.js"
 import { mapState, mapMutations } from "vuex"
 import { baseUrl } from "../../utils/env"
@@ -228,12 +230,15 @@ export default {
 													if (success.code === 1) {
 														const userData = success.data || {}
 														_this.setToken(userData.token || "")
-														// 课程版登录接口不返回配送费和店铺资料，使用本地兜底值
+														// 课程版登录接口不返回配送费和店铺资料，使用本地兜底值；
+														// 已从 /user/shop/info 取到的店铺地址要保留，不能被空值覆盖
+														const curShop = _this.shopInfo() || {}
 														_this.setDeliveryFee(Number(userData.deliveryFee) || 0)
 														_this.setShopInfo({
-															shopName: userData.shopName || "苍穹外卖",
-															shopAddress: userData.shopAddress || "",
-															shopId: Number(userData.shopId) || 1,
+															shopName: userData.shopName || curShop.shopName || "苍穹外卖",
+															shopAddress: userData.shopAddress || curShop.shopAddress || "",
+															shopPhone: curShop.shopPhone || "",
+															shopId: Number(userData.shopId) || curShop.shopId || 1,
 														})
 														_this.init()
 													}
@@ -394,6 +399,23 @@ export default {
 					this.shopStatus = res.data
 					console.log(res.data);
 					this.setShopStatus(res.data)
+				})
+				.catch((err) => { })
+			// 店铺资料：登录接口不返回名称/地址，单独查一次，首页展示店铺地址
+			await getShopInfoApi()
+				.then((res) => {
+					if (res && res.code === 1 && res.data) {
+						const cur = this.shopInfo() || {}
+						this.setShopInfo({
+							shopName: res.data.name || cur.shopName || "苍穹外卖",
+							shopAddress: res.data.address || "",
+							shopPhone: res.data.phone || "",
+							shopId: cur.shopId || 1,
+						})
+						if (res.data.phone) {
+							this.setShopPhone(res.data.phone)
+						}
+					}
 				})
 				.catch((err) => { })
 		},

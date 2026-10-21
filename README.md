@@ -81,6 +81,7 @@
 | 下单 | 校验地址、购物车、配送范围（≤5km） | `POST /user/order/submit` |
 | 支付 | 模拟支付，成功后触发来单提醒 | `PUT /user/order/payment` |
 | 订单 | 历史订单、详情、取消、再来一单、催单 | `/user/order` |
+| 店铺信息 | 店铺名称、地址、电话（小程序首页展示） | `GET /user/shop/info` |
 
 ## 技术栈
 
@@ -263,7 +264,7 @@ sky-take-out
 
 ## 接口速览
 
-共 **17 个 Controller、71 个接口**（管理端 46 / 用户端 25），启动后访问 `http://localhost:8080/doc.html` 查看完整文档（分管理端、用户端两个分组）。
+共 **17 个 Controller、72 个接口**（管理端 46 / 用户端 26），启动后访问 `http://localhost:8080/doc.html` 查看完整文档（分管理端、用户端两个分组）。
 
 | 分组 | 控制器 | 前缀 | 接口数 |
 |---|---|---|---|
@@ -283,7 +284,7 @@ sky-take-out
 | 用户端 | Category | `/user/category` | 1 |
 | 用户端 | Dish | `/user/dish` | 1 |
 | 用户端 | Setmeal | `/user/setmeal` | 2 |
-| 用户端 | Shop | `/user/shop` | 1 |
+| 用户端 | Shop | `/user/shop` | 2 |
 
 ## 数据库设计
 
@@ -340,6 +341,10 @@ sky:
     secret: 你的小程序Secret
   baidu:
     ak: 你的百度地图AK
+  shop:
+    name: 苍穹外卖
+    address: 北京市海淀区上地十街10号   # 小程序首页展示 + 配送范围校验用
+    phone: 400-000-0000
 ```
 
 ### 4. 启动后端
@@ -422,6 +427,7 @@ server {
 - 支付为模拟：`payment()` 直接调用 `paySuccess()` 并返回 `null`，未接入微信商户号与证书；
 - `BaseContext` 基于 ThreadLocal，拦截器未在 `afterCompletion` 中 `remove()`，线程复用时存在脏数据风险；
 - 「再来一单」按订单 id 复制明细，未校验订单归属；
+- 店铺名称 / 地址 / 电话来自后端配置 `sky.shop.*`，管理端没有编辑入口，改地址要改配置文件并重启；
 - `application.yml` 中 JWT 密钥为课程默认弱口令，生产环境应改为环境变量注入的随机串；
 - 未附带数据库初始化 SQL 与单元测试；
 - 小程序 token 只存 Vuex，重启后需重新登录。

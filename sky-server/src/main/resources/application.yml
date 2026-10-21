@@ -62,8 +62,12 @@ sky:
     appid: ${sky.wechat.appid}
     secret: ${sky.wechat.secret}
   shop:
-    # 商家店铺地址（百度地图配送范围校验用）
+    # 商家店铺名称
+    name: 苍穹外卖
+    # 商家店铺地址（百度地图配送范围校验用，小程序首页展示）
     address: 北京市海淀区上地十街10号
+    # 商家联系电话（小程序首页电话按钮）
+    phone: 400-000-0000
   baidu:
     # 百度地图开放平台 AK（服务端应用）
     ak: ${sky.baidu.ak}
