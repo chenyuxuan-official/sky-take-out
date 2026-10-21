@@ -263,7 +263,7 @@ sky-take-out
 
 ## 接口速览
 
-共 **17 个 Controller、70 个接口**（管理端 46 / 用户端 24），启动后访问 `http://localhost:8080/doc.html` 查看完整文档（分管理端、用户端两个分组）。
+共 **17 个 Controller、71 个接口**（管理端 46 / 用户端 25），启动后访问 `http://localhost:8080/doc.html` 查看完整文档（分管理端、用户端两个分组）。
 
 | 分组 | 控制器 | 前缀 | 接口数 |
 |---|---|---|---|
@@ -277,7 +277,7 @@ sky-take-out
 | 管理端 | Shop | `/admin/shop` | 2 |
 | 管理端 | Common | `/admin/common` | 1 |
 | 用户端 | User | `/user/user` | 1 |
-| 用户端 | Order | `/user/order` | 7 |
+| 用户端 | Order | `/user/order` | 8 |
 | 用户端 | ShoppingCart | `/user/shoppingCart` | 4 |
 | 用户端 | AddressBook | `/user/addressBook` | 7 |
 | 用户端 | Category | `/user/category` | 1 |
@@ -434,7 +434,6 @@ server {
 | 管理端 Navbar 改密 | `/employee/editPassword` | 改密弹层不可用 |
 | 管理端 `api/index.ts` | `/report/dataOverView` | 未被页面调用，无影响 |
 | 管理端图片展示 | `/common/download` | 后端未提供下载接口 |
-| 小程序历史订单「退款」tab | `/user/order/queryOrdersCheckStatus` | 该 tab 请求 404 |
 
 ## 开发日志
 
